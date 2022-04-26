@@ -50,8 +50,6 @@ let fflNum = +($.getval('ddxpffl') || "10")
                 await $.wait(10000);
                 await ddxTaskLog();
                 await $.wait(10000);
-                await dousertasklog()
-                await $.wait(10000);
                 await ddxlookend();
                 await $.wait(10000);
                 await ddxlookend2();
@@ -65,6 +63,9 @@ let fflNum = +($.getval('ddxpffl') || "10")
                 await ddxgylook();
                 await $.wait(10000);
                 await ddxgylookend();
+                await ddxTaskLog();
+                await $.wait(10000);
+                await dousertasklog()
             }
         }
     }
@@ -257,7 +258,7 @@ function ddxTaskLog(timeout = 0) {
 
 
 //处理userTASKLOG的鱼食
-function dousertasklog(timeout = 0) {
+async function dousertasklog(timeout = 0) {
     userTaskLogId = ""
     if (userTasks != null) {
         for (const task of userTasks) {
