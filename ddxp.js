@@ -5,7 +5,7 @@ ck获取：打开app,翻翻乐玩一次,领取即可
 [MITM]
 hostname = farm.api.ddxq.mobi
 [task_local]
-10 0 * * * https://raw.githubusercontent.com/justplayscript/ddxp/main/ddxp.js, tag=叮咚买菜签到, enabled=true
+10 0 8 * * * https://raw.githubusercontent.com/justplayscript/ddxp/main/ddxp.js, tag=叮咚买菜签到, enabled=true
 [rewrite_local] 
 https://farm.api.ddxq.mobi/api/v2/task/achieve url script-request-header https://raw.githubusercontent.com/justplayscript/ddxp/main/ddxp.js
 */
@@ -50,7 +50,7 @@ let fflNum = +($.getval('ddxpffl') || "10")
                 await $.wait(10000);
                 await ddxTaskLog();
                 await $.wait(10000);
-                await ddxfflget()
+                await dousertasklog()
                 await $.wait(10000);
                 await ddxlookend();
                 await $.wait(10000);
@@ -254,41 +254,44 @@ function ddxTaskLog(timeout = 0) {
     })
 }
 
-//鱼塘翻翻乐后领取
-function ddxfflget(timeout = 0) {
+
+
+//处理userTASKLOG的鱼食
+function dousertasklog(timeout = 0) {
     userTaskLogId = ""
     if (userTasks != null) {
         for (const task of userTasks) {
             //翻牌
-            if (task.taskCode == "LUCK_DRAW") {
+            if (task.userTaskLogId != null && task.buttonStatus != 'FINISHED') {
+                await $.wait(10000);
                 userTaskLogId = task.userTaskLogId
+                new Promise((resolve) => {
+                    let header = pubHeader()
+                    header["origin"] = "https://game.m.ddxq.mobi"
+                    header["referer"] = "https://game.m.ddxq.mobi/index.html"
+                    let url = {
+                        url: `https://farm.api.ddxq.mobi/api/v2/task/reward?api_version=9.1.0&app_client_id=1&station_id=${station_id}&native_version=&app_version=9.35.1&uid=${uid}&latitude=${latitude}&longitude=${longitude}&gameId=1&userTaskLogId=${userTaskLogId}`,
+                        headers: header,
+                    }
+
+                    $.get(url, async (err, resp, data) => {
+                        try {
+                            const result = JSON.parse(data)
+                            if (result.code == 0) {
+                                console.log('\n'+task.taskName+': ' + result.msg)
+                            } else {
+                                console.log(result)
+                            }
+                        } catch (e) {
+                            //$.logErr(e, resp);
+                        } finally {
+                            resolve()
+                        }
+                    }, timeout)
+                })
             }
         }
     }
-    return new Promise((resolve) => {
-        let header = pubHeader()
-        header["origin"] = "https://game.m.ddxq.mobi"
-        header["referer"] = "https://game.m.ddxq.mobi/index.html"
-        let url = {
-            url: `https://farm.api.ddxq.mobi/api/v2/task/reward?api_version=9.1.0&app_client_id=1&station_id=${station_id}&native_version=&app_version=9.35.1&uid=${uid}&latitude=${latitude}&longitude=${longitude}&gameId=1&userTaskLogId=${userTaskLogId}`,
-            headers: header,
-        }
-
-        $.get(url, async (err, resp, data) => {
-            try {
-                const result = JSON.parse(data)
-                if (result.code == 0) {
-                    console.log('\n鱼塘翻翻乐领取: ' + result.msg)
-                } else {
-                    console.log(result)
-                }
-            } catch (e) {
-                //$.logErr(e, resp);
-            } finally {
-                resolve()
-            }
-        }, timeout)
-    })
 }
 
 //鱼塘观看商品
